@@ -55,3 +55,32 @@
 - **Synchronous Direct Event Publishing Interface:**
   - *Decision:* Introduced `DomainEventPublisher` with a Spring `ApplicationEventPublisher` implementation for Phase 2, ready for direct Kafka template injection in Phase 3.
   - *Rationale:* Decouples domain services from the specific messaging transport. Service logic writes transactions and fires domain events without coupling to Kafka broker availability during unit/integration tests.
+
+---
+
+## Phase 3: Kafka Event-Driven Architecture, Asynchronous Consumers & Integration Tests
+
+### Date: 2026-11-20
+### Objectives:
+1. Implement Kafka topic configuration for `chubb.claims.events` with appropriate partitions and replication.
+2. Build `ClaimKafkaProducer` implementing `DomainEventPublisher` with claim ID-keyed message routing to guarantee event ordering per claim.
+3. Implement asynchronous Kafka consumers across domain boundaries:
+   - `ClaimActivityKafkaConsumer`: Ingestion of immutable audit trail entries in `claim_activities`.
+   - `MarketExposureKafkaConsumer`: Real-time asynchronous projection updater for `market_exposure` (aggregating open claims, exposure amounts, and settled payouts per APAC market).
+   - `ClaimantNotificationKafkaConsumer`: Simulated outbound notification dispatcher for claimant alerts on key state changes (`PENDING_INFO`, `SETTLED`, `REJECTED`).
+4. Build comprehensive integration tests verifying end-to-end event production, asynchronous processing, and read projection accuracy.
+
+### Key Decisions & Architectural Trade-offs:
+- **Key-Based Kafka Partitioning (`claimId` as message key):**
+  - *Decision:* All events published to `chubb.claims.events` use the UUID `claimId.toString()` as the Kafka message key.
+  - *Rationale:* Kafka guarantees strict total ordering within a single partition. Keying on `claimId` ensures that all state changes for a given claim (`SUBMITTED` -> `PICKED_UP` -> `INFO_REQUESTED` -> `INFO_PROVIDED` -> `SETTLED`) are processed strictly in sequence by consumers, preventing race conditions in the audit log and status timelines.
+- **Asynchronous Read Projection (`market_exposure`) vs Synchronous Aggregation:**
+  - *Decision:* The `market_exposure` table is updated asynchronously via `MarketExposureKafkaConsumer` responding to domain events, recalculating regional statistics without blocking the synchronous HTTP transaction path.
+  - *Rationale:* Keeps claim submission and officer decision APIs high-throughput and sub-50ms by removing heavy multi-table aggregations from the critical write path (CQRS pattern). The `/api/exposure` endpoint performs a fast O(1) primary-key scan against `market_exposure`.
+- **Dual-Dispatch Pattern (Kafka + Application Events):**
+  - *Decision:* `ClaimKafkaProducer` dispatches to Kafka (`KafkaTemplate.send`) and also publishes to Spring's internal `ApplicationEventPublisher`. Consumer beans are annotated with both `@KafkaListener` (for production/Docker container execution) and `@EventListener` (for lightweight in-process dispatch during fast unit and integration tests).
+  - *Rationale:* Provides full asynchronous decoupling in containerized deployments with Redpanda while enabling zero-broker, lightning-fast test execution in CI/CD without spinning up embedded JVM Kafka brokers or external Docker containers.
+- **In-Memory Notification Store with REST Read Endpoint:**
+  - *Decision:* Created `NotificationStore` and `NotificationController` (`GET /api/notifications`) populated by `ClaimantNotificationKafkaConsumer`.
+  - *Rationale:* Allows simulated emails/SMS to be verified both in automated integration tests and in the Angular frontend UI (via notification toast/bell indicator) without requiring third-party SMTP/Twilio credentials.
+
