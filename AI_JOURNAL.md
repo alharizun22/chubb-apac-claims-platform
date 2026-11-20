@@ -113,4 +113,26 @@
   - *Decision:* Configured `"fonts": false` in `angular.json` optimization and relied on robust system font stacks (`-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`).
   - *Rationale:* Prevents build failures in isolated or air-gapped CI/CD environments without open internet connectivity to Google Fonts.
 
+---
+
+## Phase 5: End-to-End Verification, Documentation & Production Polish
+
+### Date: 2026-11-20
+### Objectives:
+1. Conduct comprehensive end-to-end verification of backend unit & integration test suites and frontend production builds.
+2. Produce comprehensive, production-ready system documentation in `README.md` featuring Mermaid architecture topologies, state machine lifecycle transitions, database schema definitions, and guided evaluator walkthroughs.
+3. Review git hygiene, project configurations, and ensure all build artifacts are strictly ignored.
+
+### Key Decisions & Architectural Trade-offs:
+- **Comprehensive Mermaid Visualizations:**
+  - *Decision:* Added interactive Mermaid architecture and state machine diagrams directly to `README.md`.
+  - *Rationale:* Provides immediate clarity to evaluators on the synchronous REST vs. asynchronous Kafka event boundaries, CQRS read projection updater pattern, and the strict state transition table.
+- **Guided Evaluator Walkthrough:**
+  - *Decision:* Authored an explicit, 7-step guided walkthrough demonstrating a complete claim lifecycle (Submit -> Pick Up -> Request Info -> Provide Info -> Settle -> Exposure Recalculation -> Redpanda Console Inspection).
+  - *Rationale:* Minimizes evaluation friction, allowing hiring managers and technical assessors to verify full-stack depth in under 3 minutes.
+- **Production-Ready Packaging:**
+  - *Decision:* Verified zero-warning Angular production build and zero-failure Spring Boot test suite.
+  - *Rationale:* Guarantees out-of-the-box build reliability across varied reviewer machines and CI/CD pipelines.
+
+
 
