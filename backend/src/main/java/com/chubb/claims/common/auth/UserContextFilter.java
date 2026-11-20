@@ -17,7 +17,7 @@ import java.io.IOException;
  * Extracts X-User-Id and X-User-Role (CLAIMANT | OFFICER | SYSTEM) from request headers.
  */
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
+@Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class UserContextFilter extends OncePerRequestFilter {
 
     public static final String HEADER_USER_ID = "X-User-Id";
@@ -27,6 +27,11 @@ public class UserContextFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         try {
             String userId = request.getHeader(HEADER_USER_ID);
             String roleStr = request.getHeader(HEADER_USER_ROLE);
