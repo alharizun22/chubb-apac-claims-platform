@@ -84,3 +84,33 @@
   - *Decision:* Created `NotificationStore` and `NotificationController` (`GET /api/notifications`) populated by `ClaimantNotificationKafkaConsumer`.
   - *Rationale:* Allows simulated emails/SMS to be verified both in automated integration tests and in the Angular frontend UI (via notification toast/bell indicator) without requiring third-party SMTP/Twilio credentials.
 
+---
+
+## Phase 4: Unified Angular Frontend (Role Switcher, Claimant Portal, Officer Workbench)
+
+### Date: 2026-11-20
+### Objectives:
+1. Scaffold an Angular 17 standalone application in `frontend/` with clean Chubb branding (`#1E1035` Deep Purple, `#A3238E` Magenta, Slate backgrounds).
+2. Implement header-based RBAC with an instant 1-click **Role Switcher** in the top navigation bar (`Claimant` vs `Claims Officer`), dynamically injecting `X-User-Id` and `X-User-Role` headers into outgoing HTTP requests via an `HttpInterceptorFn`.
+3. Build the **Claimant Dashboard**:
+   - First Notice of Loss (FNOL) submission form supporting the 6 APAC markets (`MY`, `SG`, `TH`, `HK`, `AU`, `JP`) and claim types (`MOTOR`, `PROPERTY`).
+   - Live claims tracker displaying statuses (`SUBMITTED`, `UNDER_REVIEW`, `PENDING_INFO`, `SETTLED`, `REJECTED`).
+   - Detailed timeline view with an interactive "Provide Additional Information" action card whenever status is `PENDING_INFO`.
+4. Build the **Claims Officer Workbench**:
+   - Unassigned claims queue with 1-click "Pick Up" action.
+   - Active review queue with structured modal actions for "Request Info", "Settle Claim" (authorizing payout amount), and "Reject Claim" (with exclusion reason).
+   - Regional liability exposure dashboard displaying real-time CQRS projections per market and aggregated APAC exposure totals.
+5. Implement the **Simulated Notification Bell** in the top bar polling `/api/notifications` to visualize asynchronous Kafka-triggered notifications (SMS/Email/In-App).
+
+### Key Decisions & Architectural Trade-offs:
+- **Single Unified Application with Instant Role Switcher:**
+  - *Decision:* Rather than building two separate frontend portals, both Claimant and Officer workflows were combined into a unified Angular application with a top-bar persona switcher.
+  - *Rationale:* Specifically tailored for assessor and evaluator usability. Allows reviewers to switch personas in 1 click, file a claim as a Claimant, switch to Officer to pick up and request info, switch back as Claimant to supply info, and switch back to Officer to settle, observing state changes and Kafka events instantly.
+- **Standalone Angular Components Architecture:**
+  - *Decision:* Leveraged modern Angular 17 standalone components (`HeaderComponent`, `ClaimantDashboardComponent`, `OfficerWorkbenchComponent`, `ClaimTimelineComponent`) with functional HTTP interceptors (`provideHttpClient(withInterceptors([authInterceptor]))`).
+  - *Rationale:* Eliminates `NgModule` boilerplate, simplifies dependency trees, and results in a lightweight initial bundle (352 kB total, 92 kB transfer size).
+- **Offline / Air-Gapped Font Fallback:**
+  - *Decision:* Configured `"fonts": false` in `angular.json` optimization and relied on robust system font stacks (`-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`).
+  - *Rationale:* Prevents build failures in isolated or air-gapped CI/CD environments without open internet connectivity to Google Fonts.
+
+
