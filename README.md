@@ -186,27 +186,47 @@ The Angular frontend includes a **1-click Role Switcher** in the top navigation 
 
 ## 7. Quick Start Guide
 
-### Step 1: Start Containerized Infrastructure
-Ensure Docker is running, then execute:
-```bash
-docker compose up -d
-```
+### Option A: Standard Mode (Docker Compose + PostgreSQL + Redpanda)
+Use this option when Docker is available on your machine:
 
-Verify services:
-- **PostgreSQL 16:** `localhost:5432` (`chubb_claims` / `postgres` / `postgres`)
-- **Redpanda (Kafka API):** `localhost:9092`
-- **Redpanda Web Console:** 👉 **[http://localhost:8088](http://localhost:8088)** (Inspect live Kafka topics and messages)
+1. **Start Infrastructure:**
+   ```bash
+   docker compose up -d
+   ```
+   - **PostgreSQL 16:** `localhost:5432` (`chubb_claims` / `postgres` / `postgres`)
+   - **Redpanda (Kafka API):** `localhost:9092`
+   - **Redpanda Topic Console:** 👉 **[http://localhost:8088](http://localhost:8088)**
 
-### Step 2: Build & Start Spring Boot Backend
-```bash
-cd backend
-./mvnw clean spring-boot:run
-```
-*(On Windows cmd/powershell: `.\mvnw.cmd spring-boot:run`)*
+2. **Start Backend:**
+   ```bash
+   cd backend
+   ./mvnw spring-boot:run
+   ```
+   *(Windows: `.\mvnw.cmd spring-boot:run`)*
 
-- Swagger UI: 👉 **[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)**
-- Actuator Health: 👉 **[http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)**
-- Seed Data: The database automatically seeds sample claims and initial market exposures for immediate evaluation upon startup.
+---
+
+### Option B: Zero-Docker Local Mode (H2 + Embedded Kafka Broker)
+Use this option to run and evaluate the full application **without Docker or VM platforms enabled**:
+
+1. **Start Backend with `local` Profile:**
+   ```bash
+   cd backend
+   .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"
+   ```
+   *(Linux/macOS: `./mvnw spring-boot:run -Dspring-boot.run.profiles=local`)*
+
+   - **Embedded Kafka Broker:** Automatically boots an in-process Kafka broker with topic `chubb.claims.events` and controlled shutdown.
+   - **H2 In-Memory Database:** Automatically configured with `ddl-auto: update` and pre-seeded evaluation demo data.
+   - **H2 Web Console:** 👉 **[http://localhost:8080/h2-console](http://localhost:8080/h2-console)** (JDBC URL: `jdbc:h2:mem:chubb_claims`, User: `sa`, Password: empty)
+
+---
+
+### Step 2 (Common): Endpoints & Verification
+Regardless of which profile is used:
+- **Swagger UI:** 👉 **[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)**
+- **Actuator Health:** 👉 **[http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)**
+- **Demo Seed Data:** Auto-seeds initial claims and regional market exposures upon boot.
 
 ### Step 3: Run Backend Tests
 Run the comprehensive test suite (29 tests covering State Machine transitions, Kafka Producer, and full end-to-end integration):
@@ -214,6 +234,7 @@ Run the comprehensive test suite (29 tests covering State Machine transitions, K
 cd backend
 ./mvnw test
 ```
+*(Windows: `.\mvnw.cmd test`)*
 
 ### Step 4: Start Angular Frontend
 ```bash

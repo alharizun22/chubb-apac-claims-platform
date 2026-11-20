@@ -133,6 +133,10 @@
 - **Production-Ready Packaging:**
   - *Decision:* Verified zero-warning Angular production build and zero-failure Spring Boot test suite.
   - *Rationale:* Guarantees out-of-the-box build reliability across varied reviewer machines and CI/CD pipelines.
+- **Zero-Docker Local Profile (`application-local.yml` + EmbeddedKafkaBroker):**
+  - *Decision:* Introduced `EmbeddedKafkaContextInitializer` and `LocalEmbeddedKafkaConfig` activated under `@Profile("local")`, pairing H2 in-memory storage (`jdbc:h2:mem:chubb_claims`) with an in-process Kafka broker (1 broker, controlled shutdown, topic `chubb.claims.events`).
+  - *Rationale:* Evaluators or developers running on machines without Docker or virtualization enabled can immediately run the full application locally via `.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"` with full feature parity, while preserving standard `docker-compose.yml` (Postgres + Redpanda) for containerized deployments.
+
 
 
 
