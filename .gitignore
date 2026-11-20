@@ -9,6 +9,7 @@ Thumbs.db
 
 # Java / Maven
 target/
+**/target/
 *.class
 *.jar
 *.war
@@ -17,8 +18,11 @@ target/
 
 # Node / Angular
 node_modules/
+**/node_modules/
 dist/
+**/dist/
 .angular/
+**/.angular/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
